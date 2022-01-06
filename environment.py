@@ -1,18 +1,33 @@
 import random
+from numpy.lib.utils import info
 random.seed(1)
 
 class Environment(object):
 
+	""" Klasa kojom je interpretirano i implementirano zadato okruzenje. """
+
 	def __init__(self, bad_reward: int=-1, good_reward: int=3, random_state: int=1) -> None:
 
-		""" Konstruktor klase za okruzenje """
+		""" 
+            Konstruktor klase.
+
+            :params:
+                - bad_reward: vrednost "lose" nagrade
+				- good_reward: vrednost "dobre" nagrade
+				- random_state: vrednost seed-a random funkcija
+
+            :return:
+                - None
+        """
+
+		
 
 		# definisanje svih stanja
-		self.states = ['A1', 'A2', 'A3', 'A4', 'A5', 'B1', 'B2', 'B3']
+		self.states = ['A1', 'A2', 'A3', 'A4', 'A5', 'B1', 'B3', 'B5']
 		self.start_state = 'A1'
-		self.terminal_states = ['B1', 'B2', 'B3']
-		self.bad_terminal_states = ['B1', 'B2']
-		self.good_terminal_states = ['B3']
+		self.terminal_states = ['B1', 'B3', 'B5']
+		self.bad_terminal_states = ['B1', 'B3']
+		self.good_terminal_states = ['B5']
 
 		# definisanje svih akcija
 		self.actions = ['up', 'down', 'left', 'right']
@@ -36,12 +51,21 @@ class Environment(object):
 		self.populate_rewards(bad_reward, good_reward)
 
 		# resetovanje okruzenja
-		self.reset()
-
+		self.current_state = self.start_state
+		self.steps_cnt = 0
+		self.history = []
 
 	def get_possible_action_changes(self):
-		
-		""" Funkcija za mapiranje promena u akcija """
+
+		""" 
+            Funkcija za mapiranje promena u akcija.
+
+            :params:
+                - None
+
+            :return:
+                - None
+        """
 
 		self.possible_action_changes = {
 										'up'    : {
@@ -68,7 +92,15 @@ class Environment(object):
 
 	def get_possible_moves(self) -> None:
 
-		""" Funkcija za definisanje dozvoljenih kretanja """
+		""" 
+            Funkcija za definisanje dozvoljenih kretanja.
+
+            :params:
+                - None
+
+            :return:
+                - None
+        """
 
 		self.possible_moves = { 
 								'A1': {
@@ -122,18 +154,37 @@ class Environment(object):
 							   }
 
 
-	def reset(self) -> None:
+	def reset(self) -> str:
 
-		""" Funkcija za resetovanje varijabilnih parametera okruzenja """
+		""" 
+            Funkcija za resetovanje varijabilnih parametera okruzenja.
+
+            :params:
+                - None
+
+            :return:
+                - current_state: pocetno/trenutno stanje agenta
+        """
 
 		self.current_state = self.start_state
 		self.steps_cnt = 0
 		self.history = []
 
+		return self.current_state
+
 
 	def populate_rewards(self, bad_reward: int, good_reward: int) -> None:
 
-		""" Funkcija za formiranje recnika koji sadrzi nagrade za svako stanje """
+		""" 
+            Funkcija za formiranje recnika koji sadrzi nagrade za svako stanje.
+
+            :params:
+                - bad_reward: vrednost "lose" nagrade
+				- good_reward: vrednost "dobre" nagrade
+
+            :return:
+                - None
+        """
 
 		self.rewards = dict.fromkeys(self.states)
 
@@ -147,10 +198,90 @@ class Environment(object):
 			elif state in self.good_terminal_states:
 				self.rewards[state] = good_reward
 
+	def get_action_space(self) -> list:
+
+		""" 
+            Fukcija za dohvatanje svih akcija iz okruzenja.
+
+            :params:
+                - None
+
+            :return:
+                - actions: lista svih akcija
+        """
+
+		return self.actions
+
+	def get_state_space(self) -> list:
+
+		""" 
+            Fukcija za dohvatanje svih stanja okruzenja.
+
+            :params:
+                - None
+
+            :return:
+                - states: lista svih stanja
+        """
+
+		return self.states
+
+	def get_terminal_states(self) -> tuple:
+
+		""" 
+            Fukcija za dohvatanje terminalnih stanja okruzenja.
+
+            :params:
+                - None
+
+            :return:
+                - bad_terminal_states: lista "losih" terminalnih stanja
+				- good_terminal_states: lista "dobrih" terminalnih stanja 
+        """
+
+		return self.bad_terminal_states, self.good_terminal_states
+
+	def get_current_state(self) -> str:
+
+		""" 
+            Fukcija za dohvatanje trenutnog stanja.
+
+            :params:
+                - None
+
+            :return:
+                - current_state: string koji govori koje je trenutno stanje
+        """
+
+		return self.current_state
+
+	def get_history(self) -> list:
+
+		""" 
+            Fukcija za dohvatanje istorije agenta pre resetovanja okruzenja.
+
+            :params:
+                - None
+
+            :return:
+                - history: lista sa recnicima za svaku preduzetu akciju
+        """
+
+		return self.history
+
 
 	def choose_action(self, provided_action: str) -> str:
 
-		""" Fukcija za interpretaciju stohasticnosti okruzenja, slucajnim izborom mogucih akcija """
+		""" 
+            Fukcija za interpretaciju stohasticnosti okruzenja, slucajnim izborom mogucih akcija.
+
+            :params:
+                - provided_action: izabrana akcija od strane agenta, za koju okruzenje stoh. odlucuje 
+								   da li nju da primeni ili eku drugu
+
+            :return:
+                - choosen_action: finalno izabrana akcija koja se primenjuje
+        """
 
 		random.seed(self.random_state)
 
@@ -163,31 +294,59 @@ class Environment(object):
 	def move(self, action: str) -> tuple:
 
 		""" 
-			Funkcija za pomeranje trenutnog stanja u zavisnosti 
+            Funkcija za pomeranje trenutnog stanja u zavisnosti 
 			od trenutnog stanja i akcije.
-		"""
+
+            :params:
+                - action: izabrana akcija od strane agenta i okruzenja
+
+            :return:
+                - reward: nagrada za akciju
+				- new_state: novo stanje u koje prelazi agent
+				- previous_state: prethodno stanje
+				- done: indikator, da li je presao u terminalno stanje
+				- info: informacija o njegovom stanju
+        """
 
 		previous_state = self.current_state
-
 		self.current_state = self.possible_moves[self.current_state][action]
+		new_state = self.current_state
 
-		reward = self.rewards[self.current_state]
-		done = True if self.current_state in self.terminal_states else False
+		reward = self.rewards[new_state]
+		done = True if new_state in self.terminal_states else False
+		
+		if done and new_state in self.bad_terminal_states:
+			info = f'Nazalost, agent je zavrsio epizodu u stanju {new_state} :('
+		elif done and new_state in self.good_terminal_states:
+			info = f'Bravo! Agent je zavrsio epizodu u stanju {new_state} :)'
+		else:
+			info = None
 
 		self.steps_cnt += 1
 
-		return reward, self.current_state, previous_state, done
+		return reward, new_state, previous_state, done, info
 
 
 	def step(self, action: str) -> tuple:
 
-		""" Funkcija za interakciju sa okruzenjem, tj. preduzimanjem akcije """
+		""" 
+            Funkcija za interakciju sa okruzenjem, tj. preduzimanjem akcije.
+
+            :params:
+                - action: ackija koju je agent izabrao kao najadekvatniju
+
+            :return:
+                - reward: nagrada za akciju
+				- new_state: novo stanje u koje prelazi agent
+				- done: indikator, da li je presao u terminalno stanje
+				- info: informacija o njegovom stanju
+        """
 
 		if action.lower() in self.actions:
 
 			choosen_action = self.choose_action(action.lower())
 				
-			reward, new_state, prev_state, done = self.move(choosen_action)
+			reward, new_state, prev_state, done, info = self.move(choosen_action)
 
 			self.history.append({
 								 'steps_taken'     : self.steps_cnt,
@@ -197,4 +356,4 @@ class Environment(object):
 								 'new_state'       : new_state
 								})
 
-		return  reward, new_state, done
+		return  reward, new_state, done, info
