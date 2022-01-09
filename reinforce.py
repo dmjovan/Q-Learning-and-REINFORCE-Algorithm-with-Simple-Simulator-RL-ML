@@ -119,6 +119,7 @@ class ReinforceAgent(object):
         return features
 
 
+
     def manhattan_distance(self, state1: str, state2: str) -> int:
 
         """ 
@@ -400,7 +401,7 @@ class ReinforceAgent(object):
         self.update_params(episode)
 
 
-    def do_all(self, num_slices: int=4) -> None:
+    def train_and_evaluate(self, num_slices: int=4) -> None:
 
         """
             Funkcija za izvrsavanje svega - treniranje, testiranje (evaluaciju), iscrtavanje itd...
@@ -426,6 +427,8 @@ class ReinforceAgent(object):
                 self.learn(episode)
 
              # ispisivanje optimalne politike koju je agent naucio
+            print(f'------------ EVALUACIJA NAKON {ep_slice[1]} EPIZODA ------------')
+            print('Naucena optimalna politika: ')
             self.print_policy()
             
             # testiranje agenta
@@ -446,7 +449,7 @@ class ReinforceAgent(object):
 
         params = np.array(params)
         
-        fig, axes = plt.subplots(ncols=len(self.non_terminal_states), figsize=(40,10))
+        fig, axes = plt.subplots(ncols=len(self.non_terminal_states), figsize=(24,10))
         ax = axes.ravel()
         action_colors = ['blue', 'red', 'green', 'gray']
         for i, state in enumerate(self.non_terminal_states):
@@ -459,13 +462,3 @@ class ReinforceAgent(object):
             ax[i].grid()
         plt.show()
         plt.tight_layout()
-
-
-# agent = ReinforceAgent()
-# agent.do_all()
-
-# agent = ReinforceAgent(alpha=0.6)
-# agent.do_all()
-
-# agent = ReinforceAgent(alpha=0.2)
-# agent.do_all()

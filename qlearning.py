@@ -11,8 +11,8 @@ class QLearningAgent(object):
 
     """ Klasa u kojoj je implementran Q-Learning algoritam iz oblasti Reinforcement Learning-a. """
 
-    def __init__(self, num_episodes: int=100, max_iter: int=2000, eval_episodes: int=10, 
-                 gamma: float=0.9, alpha: float=None, epsilon: float=0.6) -> None:
+    def __init__(self, num_episodes: int=200, max_iter: int=2000, eval_episodes: int=10, 
+                 gamma: float=0.9, alpha: float=None, epsilon: float=0.6, print_infos: bool=True) -> None:
 
         """ 
             Konstruktor klase.
@@ -24,6 +24,7 @@ class QLearningAgent(object):
                 - gamma: faktor umanjenja buducih nagrada
                 - alpha: konstanta ucenja
                 - epsilon: verovatnoca uzorkovanja slucajnih akcija
+                - print_infos: indikator za printovanje informacija na kraju epizode
 
             :return:
                 - None
@@ -52,6 +53,8 @@ class QLearningAgent(object):
 
         # definisanje epsilon verovatnoce za istrazivanje
         self.epsilon = epsilon
+
+        self.print_infos = print_infos
 
         # inicijalizacija strukture za cuvanje epizodnih statistika tokom treniranja
         self.train_episode_stats = EpisodeStats(episode_lengths = np.zeros(self.num_episodes), episode_rewards = np.zeros(self.num_episodes)) 
@@ -161,7 +164,7 @@ class QLearningAgent(object):
             self.update_alpha(episode)
 
             # azuriranje epsilon verovatnoce u svakoj epizode
-            # self.update_epsilon(episode)
+            self.update_epsilon(episode)
             
             # iteriranje po iteracijama u okviru jedne epizode
             for i in range(self.max_iter):
@@ -186,15 +189,18 @@ class QLearningAgent(object):
     
                 # terminiranje epizode ukoliko je okruzenje reklo da je agent dosao u terminalno stanje 
                 if done:
-                    print(info)
+                    if self.print_infos:
+                        print(info)
                     break
 
                 # tranzicija iz prehodnog u novo stanje
                 state = next_state
 
-            if not done:
+            if not done and self.print_infos:
                 print(f'Maksimalan broj iteracija je dostignut! Agent je zavrsio epizodu u stanju {state}')
 
+        print('Naucena optimalna politika: ')
+        self.print_policy()
         self.plot_stats()
 
 
@@ -233,16 +239,34 @@ class QLearningAgent(object):
 
                 # terminacija epizode
                 if done:
-                    print(info)
+                    if self.print_infos:
+                        print(info)
                     break
 
                 # tranzija stanja
                 state = next_state
 
-            if not done:
+            if not done and self.print_infos:
                 print(f'Maksimalan broj iteracija je dostignut! Agent je zavrsio epizodu u stanju {state}')
 
         print(f'Prosecna ukupna epizodna nagrada je: {np.sum(self.eval_episode_stats.episode_rewards)/self.eval_episodes}')
+
+
+    def print_policy(self) -> None:
+
+        """
+            Funkcija za ispisvanje najbolje/optimalne politike 
+            u neterminalnim stanjima.
+
+            :params:
+                - None
+
+            :return:
+                - None
+        """
+
+        for state in self.non_terminal_states:
+            print(f'Stanje {state} ------> Akcija {self.policy(state, train=False).upper()}')
 
 
     def plot_stats(self):
@@ -257,9 +281,14 @@ class QLearningAgent(object):
                 - None
         """
 
+        if not self.alpha_flag:
+            alpha_str = "volatile"
+        else:
+            alpha_str = str(self.alpha)
+
         # --------------- TRENIRANJE - EPIZODE ---------------
         fig, ax = plt.subplots(figsize=(12,10))
-        plt.title(f'Treniranje agenta \nPromena ukupne nagrade po epizodama \nbr. epizoda={self.num_episodes}, max. iter={self.max_iter}, $\gamma$={self.gamma}')
+        plt.title(f'Treniranje agenta \nPromena ukupne nagrade po epizodama \nbr. epizoda={self.num_episodes}, max. iter={self.max_iter}, $\\gamma$={self.gamma}, $\\alpha$={alpha_str}')
 
         ax.plot(np.arange(0, self.num_episodes), self.train_episode_stats.episode_rewards, color='blue', marker='o')
         ax.set_xlabel('#No. epizode')
@@ -270,13 +299,13 @@ class QLearningAgent(object):
         ax1.axhline(self.max_iter, color='green', linestyle='-.', label='Max. Iter')
         ax1.set_ylabel('Iteracije', color='red')
         ax1.grid()
-        ax1.legend(loc='lower right')
+        ax1.legend(loc='upper left')
         plt.tight_layout()
         plt.show()
 
         # --------------- TRENIRANJE - ITERACIJE ---------------
         plt.figure(figsize=(12,10))
-        plt.title(f'Treniranje agenta \nPromena V vrednosti po iteracijama \nbr. epizoda={self.num_episodes}, max. iter={self.max_iter}, $\gamma$={self.gamma}')
+        plt.title(f'Treniranje agenta \nPromena V vrednosti po iteracijama \nbr. epizoda={self.num_episodes}, max. iter={self.max_iter}, $\\gamma$={self.gamma}, $\\alpha$={alpha_str}')
         
         for state, col in zip(self.non_terminal_states, ['blue', 'red', 'green', 'gray', 'tomato']):
             plt.plot(np.arange(0,len(self.iter_values[state])), self.iter_values[state], color=col, label=f'Stanje {state}')
@@ -284,10 +313,6 @@ class QLearningAgent(object):
         plt.xlabel('#No. iteracije')
         plt.ylabel('V vrednost')
         plt.grid()
-        ax1.legend(loc='upper left')
+        plt.legend(loc='upper left')
         plt.tight_layout()
         plt.show()
-
-# agent = QLearningAgent(gamma=0.9)
-# agent.train()
-# agent.evaluate()
