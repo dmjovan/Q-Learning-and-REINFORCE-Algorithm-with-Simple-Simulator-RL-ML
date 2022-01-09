@@ -1,12 +1,11 @@
 import random
 from numpy.lib.utils import info
-random.seed(1)
 
 class Environment(object):
 
 	""" Klasa kojom je interpretirano i implementirano zadato okruzenje. """
 
-	def __init__(self, bad_reward: int=-1, good_reward: int=3, random_state: int=1) -> None:
+	def __init__(self, bad_reward: int=-1, good_reward: int=3) -> None:
 
 		""" 
             Konstruktor klase.
@@ -14,13 +13,10 @@ class Environment(object):
             :params:
                 - bad_reward: vrednost "lose" nagrade
 				- good_reward: vrednost "dobre" nagrade
-				- random_state: vrednost seed-a random funkcija
 
             :return:
                 - None
         """
-
-		
 
 		# definisanje svih stanja
 		self.states = ['A1', 'A2', 'A3', 'A4', 'A5', 'B1', 'B3', 'B5']
@@ -44,8 +40,6 @@ class Environment(object):
 
 		# definisanje kretanja u zavisnosti od stanja i akcije
 		self.get_possible_moves()
-
-		self.random_state = random_state
 
 		# definisanje nagrada za sva stanja
 		self.populate_rewards(bad_reward, good_reward)
@@ -270,20 +264,18 @@ class Environment(object):
 		return self.history
 
 
-	def choose_action(self, provided_action: str) -> str:
+	def choose_action(self, provided_action: str, override: bool=False) -> str:
 
 		""" 
             Fukcija za interpretaciju stohasticnosti okruzenja, slucajnim izborom mogucih akcija.
 
             :params:
                 - provided_action: izabrana akcija od strane agenta, za koju okruzenje stoh. odlucuje 
-								   da li nju da primeni ili eku drugu
+								   da li nju da primeni ili neku drugu
 
             :return:
                 - choosen_action: finalno izabrana akcija koja se primenjuje
         """
-
-		random.seed(self.random_state)
 
 		choosen = random.choices(list(self.action_probabilities.keys()), weights=list(self.action_probabilities.values()), k=1)[0]
 		choosen_action = self.possible_action_changes[provided_action][choosen]
@@ -316,7 +308,7 @@ class Environment(object):
 		done = True if new_state in self.terminal_states else False
 		
 		if done and new_state in self.bad_terminal_states:
-			info = f'Nazalost, agent je zavrsio epizodu u stanju {new_state} :('
+			info = f'Pufff! Agent je zavrsio epizodu u stanju {new_state} :('
 		elif done and new_state in self.good_terminal_states:
 			info = f'Bravo! Agent je zavrsio epizodu u stanju {new_state} :)'
 		else:
